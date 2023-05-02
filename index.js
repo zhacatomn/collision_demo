@@ -215,7 +215,7 @@ const init = () => {
   const entityCntEle = document.getElementById("entity-cnt");
   entityCntEle.addEventListener("focusout", () => {
     let numEntitiesNew = parseInt(entityCntEle.value);
-    if (numEntitiesNew == null) {
+    if (numEntitiesNew == null || isNaN(numEntitiesNew)) {
       entityCntEle.value = numEntities;
       return;
     }
