@@ -70,10 +70,10 @@
       class Circle {
         static defaultSpeed = 5;
         static defaultRadius = 20;
-        constructor(x, y, speedX, speedY, colour = "red") {
+        constructor(x, y, angle, colour = "red") {
           this.radius = Circle.defaultRadius;
-          this.speedX = speedX;
-          this.speedY = speedY;
+          this.speedX = Circle.defaultSpeed * Math.cos(angle);
+          this.speedY = Circle.defaultSpeed * Math.sin(angle);
           this.x = x;
           this.y = y;
           this.colour = colour;
@@ -94,14 +94,6 @@
               Math.random() * (CANVAS_HEIGHT - 2 * Circle.defaultRadius)
             ) + Circle.defaultRadius
           );
-        }
-
-        static generateRandomSpeed() {
-          const speedX = (Math.random() < 0.5 ? 1 : -1) * Math.random() * 5;
-          const speedY =
-            (Math.random() < 0.5 ? 1 : -1) *
-            Math.sqrt(Circle.defaultSpeed ** 2 - speedX ** 2);
-          return [speedX, speedY];
         }
 
         isCollideWith(otherCircle) {
@@ -136,12 +128,10 @@
       // ];
       const entities = [];
       for (let i = 0; i < NUM_ENTITIES; i++) {
-        const [speedX, speedY] = Circle.generateRandomSpeed();
         const circle = new Circle(
           Circle.generateRandomX(),
           Circle.generateRandomY(),
-          speedX,
-          speedY,
+          Math.random() * 360,
           COLOURS[i % COLOURS.length]
         );
 
