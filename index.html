@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Random Motion Demo</title>
+  </head>
+  <style>
+    body {
+      margin: 0;
+      width: 100vw;
+      min-height: 100vh;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+    }
+    #canvas {
+      border: 1px solid black;
+    }
+    #counter {
+      text-align: center;
+      font-family: Consolas;
+    }
+  </style>
+  <body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="counter">
+      <h3>Time Elapsed</h3>
+      <span id="elapsed-min">00</span>:<span id="elapsed-sec">00</span>
+    </div>
+
+    <script>
+      const CANVAS_WIDTH = 800;
+      const CANVAS_HEIGHT = 600;
+      const NUM_ENTITIES = 3;
+      const COLOURS = ["blue", "red", "green"];
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      class Circle {
+        static defaultSpeed = 5;
+        static defaultRadius = 20;
+        constructor(x, y, colour = "red") {
+          this.radius = Circle.defaultRadius;
+          this.speedX = (Math.random() < 0.5 ? 1 : -1) * Math.random() * 5;
+          this.speedY =
+            (Math.random() < 0.5 ? 1 : -1) *
+            Math.sqrt(Circle.defaultSpeed ** 2 - this.speedX ** 2);
+          this.colour = colour;
+          this.x = x;
+          this.y = y;
+        }
+
+        static generateRandomX() {
+          return (
+            Math.floor(
+              Math.random() * (CANVAS_WIDTH - 2 * Circle.defaultRadius)
+            ) + Circle.defaultRadius
+          );
+        }
+
+        static generateRandomY() {
+          return (
+            Math.floor(
+              Math.random() * (CANVAS_HEIGHT - 2 * Circle.defaultRadius)
+            ) + Circle.defaultRadius
+          );
+        }
+
+        hasCollidedWith(otherCircle) {
+          return (
+            (this.x - otherCircle.x) ** 2 + (this.y - otherCircle.y) ** 2 <
+            (this.radius + otherCircle.radius) ** 2
+          );
+        }
+
+        move() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+          ctx.fillStyle = this.colour;
+          ctx.fill();
+          ctx.closePath();
+        }
+      }
+
+      // Creating circle objects
+      const entities = [];
+      for (let i = 0; i < NUM_ENTITIES; i++) {
+        const circle = new Circle(
+          Circle.generateRandomX(),
+          Circle.generateRandomY(),
+          COLOURS[i % COLOURS.length]
+        );
+
+        for (let j = 0; j < entities.length; j++) {
+          if (!circle.hasCollidedWith(entities[j])) {
+            continue;
+          }
+          circle.x = Circle.generateRandomX();
+          circle.y = Circle.generateRandomY();
+          j = 0;
+        }
+        entities.push(circle);
+      }
+
+      // Setting time elapsed interval
+      let timeElapsed = 0;
+      const minElapsedEle = document.getElementById("elapsed-min");
+      const secElapsedEle = document.getElementById("elapsed-sec");
+      const timeElapsedIntervalId = window.setInterval(() => {
+        timeElapsed++;
+        const secElapsedStr = (timeElapsed % 60).toString();
+        const minElapsedStr = Math.floor(timeElapsed / 60).toString();
+        minElapsedEle.innerHTML =
+          (minElapsedStr.length === 1 ? "0" : "") + minElapsedStr;
+        secElapsedEle.innerHTML =
+          (secElapsedStr.length === 1 ? "0" : "") + secElapsedStr;
+      }, 1000);
+
+      const mainLoop = () => {
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        for (const ent of entities) {
+          ent.move();
+          ent.draw();
+        }
+
+        // Checking collision with walls
+        for (const ent of entities) {
+          if (ent.x + ent.radius >= CANVAS_WIDTH || ent.x - ent.radius <= 0) {
+            ent.speedX =
+              (ent.x + ent.radius >= CANVAS_WIDTH ? -1 : 1) *
+              Math.abs(ent.speedX);
+          }
+          if (ent.y + ent.radius >= CANVAS_HEIGHT || ent.y - ent.radius <= 0) {
+            ent.speedY =
+              (ent.y + ent.radius >= CANVAS_HEIGHT ? -1 : 1) *
+              Math.abs(ent.speedY);
+          }
+        }
+
+        // Checking collision with other circles
+        let canTerminate = true;
+        for (let i = 0; i < entities.length; i++) {
+          for (let j = i + 1; j < entities.length; j++) {
+            const ent1 = entities[i];
+            const ent2 = entities[j];
+            if (!ent1.hasCollidedWith(ent2)) {
+              canTerminate = false;
+              continue;
+            }
+            [ent1.speedX, ent1.speedY, ent2.speedX, ent2.speedY] = [
+              ent2.speedX,
+              ent2.speedY,
+              ent1.speedX,
+              ent1.speedY,
+            ];
+          }
+        }
+
+        // Terminating if all 3 spheres collide
+        if (canTerminate) {
+          window.clearInterval(timeElapsedIntervalId);
+          return;
+        }
+
+        window.requestAnimationFrame(mainLoop);
+      };
+
+      window.requestAnimationFrame(mainLoop);
+    </script>
+  </body>
+</html>

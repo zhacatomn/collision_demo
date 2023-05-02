@@ -1,2 +1,3 @@
-# collision.github.io
-A simple collision demo between 3 particles. 
+# Collision Demo
+
+A simple collision demo between 3 particles.
