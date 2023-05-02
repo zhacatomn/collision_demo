@@ -9,6 +9,10 @@
       src: url("Outfit-Regular.ttf") format("truetype");
     }
 
+    :root {
+      font-family: Outfit Regular;
+    }
+
     body {
       margin: 0;
       width: 100vw;
@@ -23,13 +27,23 @@
     #canvas {
       border: 1px solid black;
     }
+    #control button {
+      margin: 0 0.5rem 0 0.5rem;
+    }
     #counter {
       text-align: center;
-      font-family: Outfit Regular;
+    }
+    #counter h3 {
+      margin: 0;
     }
   </style>
   <body>
     <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="control">
+      <button id="slow-down" disabled><<</button>
+      ×<span id="multiplier">1</span>
+      <button id="speed-up">>></button>
+    </div>
     <div id="counter">
       <h3>Time Elapsed</h3>
       <span id="elapsed-min">00</span>:<span id="elapsed-sec">00</span>
@@ -46,15 +60,13 @@
       class Circle {
         static defaultSpeed = 5;
         static defaultRadius = 20;
-        constructor(x, y, colour = "red") {
+        constructor(x, y, speedX, speedY, colour = "red") {
           this.radius = Circle.defaultRadius;
-          this.speedX = (Math.random() < 0.5 ? 1 : -1) * Math.random() * 5;
-          this.speedY =
-            (Math.random() < 0.5 ? 1 : -1) *
-            Math.sqrt(Circle.defaultSpeed ** 2 - this.speedX ** 2);
-          this.colour = colour;
+          this.speedX = speedX;
+          this.speedY = speedY;
           this.x = x;
           this.y = y;
+          this.colour = colour;
         }
 
         static generateRandomX() {
@@ -73,10 +85,20 @@
           );
         }
 
+        static generateRandomSpeed() {
+          const speedX = (Math.random() < 0.5 ? 1 : -1) * Math.random() * 5;
+          const speedY =
+            (Math.random() < 0.5 ? 1 : -1) *
+            Math.sqrt(Circle.defaultSpeed ** 2 - speedX ** 2);
+          return [speedX, speedY];
+        }
+
         hasCollidedWith(otherCircle) {
+          // Checking for collision, with an additional threshold variable
+          const additionalThreshold = 0;
           return (
-            (this.x - otherCircle.x) ** 2 + (this.y - otherCircle.y) ** 2 <
-            (this.radius + otherCircle.radius) ** 2
+            (this.x - otherCircle.x) ** 2 + (this.y - otherCircle.y) ** 2 <=
+            (this.radius + otherCircle.radius + additionalThreshold) ** 2
           );
         }
 
@@ -94,12 +116,20 @@
         }
       }
 
-      // Creating circle objects
+      // Creating circle entities
+      //   const entities = [
+      //     new Circle(400 + 40 * Math.sin(Math.PI / 3), 280, -1, 1, "red"),
+      //     new Circle(400 - 40 * Math.sin(Math.PI / 3), 280, 1, 1, "blue"),
+      //     new Circle(400, 300 + 40, 0, -1, "green"),
+      //   ];
       const entities = [];
       for (let i = 0; i < NUM_ENTITIES; i++) {
+        const [speedX, speedY] = Circle.generateRandomSpeed();
         const circle = new Circle(
           Circle.generateRandomX(),
           Circle.generateRandomY(),
+          speedX,
+          speedY,
           COLOURS[i % COLOURS.length]
         );
 
@@ -114,12 +144,48 @@
         entities.push(circle);
       }
 
+      // Setting speed control event listeners
+      let currMultiplier = 1;
+      const MIN_MULTIPLIER = 1;
+      const MAX_MULTIPLIER = 5;
+      const speedUpBtn = document.getElementById("speed-up");
+      const slowDownBtn = document.getElementById("slow-down");
+      const multiplierEle = document.getElementById("multiplier");
+
+      const updateSpeed = (prevMulti, currMulti) => {
+        for (ent of entities) {
+          ent.speedX *= currMulti / prevMulti;
+          ent.speedY *= currMulti / prevMulti;
+        }
+        multiplierEle.innerHTML = currMulti;
+      };
+
+      speedUpBtn.addEventListener("click", () => {
+        const prevMultiplier = currMultiplier;
+        currMultiplier += 1;
+        updateSpeed(prevMultiplier, currMultiplier);
+        if (currMultiplier >= MAX_MULTIPLIER) {
+          speedUpBtn.disabled = true;
+        }
+        slowDownBtn.disabled = false;
+      });
+
+      slowDownBtn.addEventListener("click", () => {
+        const prevMultiplier = currMultiplier;
+        currMultiplier -= 1;
+        updateSpeed(prevMultiplier, currMultiplier);
+        if (currMultiplier <= MIN_MULTIPLIER) {
+          slowDownBtn.disabled = true;
+        }
+        speedUpBtn.disabled = false;
+      });
+
       // Setting time elapsed interval
       let timeElapsed = 0;
       const minElapsedEle = document.getElementById("elapsed-min");
       const secElapsedEle = document.getElementById("elapsed-sec");
       const timeElapsedIntervalId = window.setInterval(() => {
-        timeElapsed++;
+        timeElapsed += currMultiplier;
         const secElapsedStr = (timeElapsed % 60).toString();
         const minElapsedStr = Math.floor(timeElapsed / 60).toString();
         minElapsedEle.innerHTML =
@@ -150,15 +216,15 @@
         }
 
         // Checking collision with other circles
-        let canTerminate = true;
+        let numCollisions = 0;
         for (let i = 0; i < entities.length; i++) {
           for (let j = i + 1; j < entities.length; j++) {
             const ent1 = entities[i];
             const ent2 = entities[j];
             if (!ent1.hasCollidedWith(ent2)) {
-              canTerminate = false;
               continue;
             }
+            numCollisions++;
             [ent1.speedX, ent1.speedY, ent2.speedX, ent2.speedY] = [
               ent2.speedX,
               ent2.speedY,
@@ -169,7 +235,7 @@
         }
 
         // Terminating if all 3 spheres collide
-        if (canTerminate) {
+        if (numCollisions >= 2) {
           window.clearInterval(timeElapsedIntervalId);
           return;
         }
