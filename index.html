@@ -8,14 +8,12 @@
       font-family: "Outfit Regular";
       src: url("Outfit-Regular.ttf") format("truetype");
     }
-
     :root {
       font-family: Outfit Regular;
     }
-
     body {
       margin: 0;
-      width: 100vw;
+      width: 100%;
       min-height: 100vh;
 
       display: flex;
@@ -30,10 +28,16 @@
     #control button {
       margin: 0 0.5rem 0 0.5rem;
     }
-    #counter {
+    #data {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+    }
+    .data-item {
       text-align: center;
     }
-    #counter h3 {
+    .data-item h3 {
       margin: 0;
     }
   </style>
@@ -44,9 +48,15 @@
       ×<span id="multiplier">1</span>
       <button id="speed-up">>></button>
     </div>
-    <div id="counter">
-      <h3>Time Elapsed</h3>
-      <span id="elapsed-min">00</span>:<span id="elapsed-sec">00</span>
+    <div id="data">
+      <div class="data-item">
+        <h3>Time Elapsed</h3>
+        <span id="elapsed-min">00</span>:<span id="elapsed-sec">00</span>
+      </div>
+      <div class="data-item">
+        <h3># Bimolecular Collisions</h3>
+        <span id="collision-cnt">0</span>
+      </div>
     </div>
 
     <script>
@@ -67,6 +77,7 @@
           this.x = x;
           this.y = y;
           this.colour = colour;
+          this.prevCollidedEntity = null;
         }
 
         static generateRandomX() {
@@ -93,7 +104,7 @@
           return [speedX, speedY];
         }
 
-        hasCollidedWith(otherCircle) {
+        isCollideWith(otherCircle) {
           // Checking for collision, with an additional threshold variable
           const additionalThreshold = 0;
           return (
@@ -117,11 +128,12 @@
       }
 
       // Creating circle entities
-      //   const entities = [
-      //     new Circle(400 + 40 * Math.sin(Math.PI / 3), 280, -1, 1, "red"),
-      //     new Circle(400 - 40 * Math.sin(Math.PI / 3), 280, 1, 1, "blue"),
-      //     new Circle(400, 300 + 40, 0, -1, "green"),
-      //   ];
+      // const entities = [
+      //   new Circle(400 + 40 * Math.sin(Math.PI / 3), 280, -1, 1, "red"),
+      //   new Circle(400 - 40 * Math.sin(Math.PI / 3), 280, 1, 1, "blue"),
+      //   new Circle(400, 260, 0, 1, "red"),
+      //   new Circle(400, 300 + 40, 0, -1, "green"),
+      // ];
       const entities = [];
       for (let i = 0; i < NUM_ENTITIES; i++) {
         const [speedX, speedY] = Circle.generateRandomSpeed();
@@ -134,7 +146,7 @@
         );
 
         for (let j = 0; j < entities.length; j++) {
-          if (!circle.hasCollidedWith(entities[j])) {
+          if (!circle.isCollideWith(entities[j])) {
             continue;
           }
           circle.x = Circle.generateRandomX();
@@ -184,6 +196,7 @@
       let timeElapsed = 0;
       const minElapsedEle = document.getElementById("elapsed-min");
       const secElapsedEle = document.getElementById("elapsed-sec");
+
       const timeElapsedIntervalId = window.setInterval(() => {
         timeElapsed += currMultiplier;
         const secElapsedStr = (timeElapsed % 60).toString();
@@ -194,48 +207,95 @@
           (secElapsedStr.length === 1 ? "0" : "") + secElapsedStr;
       }, 1000);
 
+      // Initialising collision counter
+      let collisionCntTotal = 0;
+      const collisionCntEle = document.getElementById("collision-cnt");
+
       const mainLoop = () => {
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         for (const ent of entities) {
           ent.move();
-          ent.draw();
         }
-
         // Checking collision with walls
         for (const ent of entities) {
           if (ent.x + ent.radius >= CANVAS_WIDTH || ent.x - ent.radius <= 0) {
             ent.speedX =
               (ent.x + ent.radius >= CANVAS_WIDTH ? -1 : 1) *
               Math.abs(ent.speedX);
+            ent.prevCollidedEntity = null;
           }
           if (ent.y + ent.radius >= CANVAS_HEIGHT || ent.y - ent.radius <= 0) {
             ent.speedY =
               (ent.y + ent.radius >= CANVAS_HEIGHT ? -1 : 1) *
               Math.abs(ent.speedY);
+            ent.prevCollidedEntity = null;
           }
         }
 
         // Checking collision with other circles
-        let numCollisions = 0;
+        let collisionCntCurr = 0;
         for (let i = 0; i < entities.length; i++) {
           for (let j = i + 1; j < entities.length; j++) {
             const ent1 = entities[i];
             const ent2 = entities[j];
-            if (!ent1.hasCollidedWith(ent2)) {
+            if (
+              !ent1.isCollideWith(ent2) ||
+              (ent1.prevCollidedEntity === ent2 &&
+                ent2.prevCollidedEntity === ent1)
+            ) {
               continue;
             }
-            numCollisions++;
+            ent1.prevCollidedEntity = ent2;
+            ent2.prevCollidedEntity = ent1;
+            collisionCntCurr++;
+            collisionCntTotal++;
+            const theta =
+              Math.PI / 2 -
+              (ent1.x == ent2.x
+                ? 0
+                : ent1.y == ent2.y
+                ? Math.PI / 2
+                : Math.atan((ent1.y - ent2.y) / (ent1.x - ent2.x)));
+            const sinTheta = Math.sin(theta);
+            const cosTheta = Math.cos(theta);
             [ent1.speedX, ent1.speedY, ent2.speedX, ent2.speedY] = [
-              ent2.speedX,
-              ent2.speedY,
-              ent1.speedX,
-              ent1.speedY,
+              ent1.speedX * cosTheta ** 2 -
+                ent1.speedY * (sinTheta * cosTheta) +
+                ent2.speedX * sinTheta ** 2 +
+                ent2.speedY * (cosTheta * sinTheta),
+              -ent1.speedX * sinTheta * cosTheta +
+                ent1.speedY * sinTheta ** 2 +
+                ent2.speedX * (sinTheta * cosTheta) +
+                ent2.speedY * cosTheta ** 2,
+              ent2.speedX * cosTheta ** 2 -
+                ent2.speedY * (sinTheta * cosTheta) +
+                ent1.speedX * sinTheta ** 2 +
+                ent1.speedY * (cosTheta * sinTheta),
+              -ent2.speedX * sinTheta * cosTheta +
+                ent2.speedY * sinTheta ** 2 +
+                ent1.speedX * (sinTheta * cosTheta) +
+                ent1.speedY * cosTheta ** 2,
             ];
+            // Separating the 2 elements so they are not colliding anymore
+            const dist = Math.sqrt(
+              (ent1.x - ent2.x) ** 2 + (ent1.y - ent2.y) ** 2
+            );
+            ent2.x +=
+              (ent2.x >= ent1.x ? 1 : -1) *
+              (2 * Circle.defaultRadius - dist) *
+              Math.abs(sinTheta);
+            ent2.y +=
+              (ent2.y >= ent1.y ? 1 : -1) *
+              (2 * Circle.defaultRadius - dist) *
+              Math.abs(cosTheta);
           }
         }
-
-        // Terminating if all 3 spheres collide
-        if (numCollisions >= 2) {
+        for (const ent of entities) {
+          ent.draw();
+        }
+        collisionCntEle.innerHTML = collisionCntTotal;
+        // Terminating if all spheres collide
+        if (collisionCntCurr >= NUM_ENTITIES - 1) {
           window.clearInterval(timeElapsedIntervalId);
           return;
         }
