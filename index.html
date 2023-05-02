@@ -22,13 +22,29 @@
       align-items: center;
       gap: 1rem;
     }
+    #end-message {
+      font-size: 2rem;
+      font-weight: bold;
+      display: none;
+    }
     #canvas {
-      border: 1px solid black;
+      border: 2px solid black;
+      border-radius: 15px;
     }
-    #control button {
+    .control-item,
+    .control-item input,
+    .control-item button {
+      font-size: 1.5rem;
+    }
+    .control-item {
+      text-align: center;
+    }
+    .control-item button {
       margin: 0 0.5rem 0 0.5rem;
+      font-size: 1.5rem;
     }
-    #data {
+    #data,
+    #control {
       display: flex;
       justify-content: center;
       align-items: center;
@@ -42,12 +58,29 @@
     }
   </style>
   <body>
+    <div id="end-message">Trimolecular collision occured!</div>
+
     <canvas id="canvas" width="800" height="600"></canvas>
+
     <div id="control">
-      <button id="slow-down" disabled><<</button>
-      ×<span id="multiplier">1</span>
-      <button id="speed-up">>></button>
+      <div class="control-item">
+        <label for="entity-cnt"># Molecules </label><br /><input
+          type="number"
+          value="3"
+          id="entity-cnt"
+          min="3"
+          max="50"
+        />
+      </div>
+
+      <div class="control-item">
+        <span>Speedup</span> <br />
+        <button id="slow-down" disabled><<</button>
+        ×<span id="multiplier">1</span>
+        <button id="speed-up">>></button>
+      </div>
     </div>
+
     <div id="data">
       <div class="data-item">
         <h3>Time Elapsed</h3>
@@ -58,242 +91,6 @@
         <span id="collision-cnt">0</span>
       </div>
     </div>
-
-    <script>
-      const CANVAS_WIDTH = 800;
-      const CANVAS_HEIGHT = 600;
-      const NUM_ENTITIES = 3;
-      const COLOURS = ["blue", "red", "green"];
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
-
-      class Circle {
-        static defaultSpeed = 5;
-        static defaultRadius = 20;
-        constructor(x, y, angle, colour = "red") {
-          this.radius = Circle.defaultRadius;
-          this.speedX = Circle.defaultSpeed * Math.cos(angle);
-          this.speedY = Circle.defaultSpeed * Math.sin(angle);
-          this.x = x;
-          this.y = y;
-          this.colour = colour;
-          this.prevCollidedEntity = null;
-        }
-
-        static generateRandomX() {
-          return (
-            Math.floor(
-              Math.random() * (CANVAS_WIDTH - 2 * Circle.defaultRadius)
-            ) + Circle.defaultRadius
-          );
-        }
-
-        static generateRandomY() {
-          return (
-            Math.floor(
-              Math.random() * (CANVAS_HEIGHT - 2 * Circle.defaultRadius)
-            ) + Circle.defaultRadius
-          );
-        }
-
-        isCollideWith(otherCircle) {
-          // Checking for collision, with an additional threshold variable
-          const additionalThreshold = 0;
-          return (
-            (this.x - otherCircle.x) ** 2 + (this.y - otherCircle.y) ** 2 <=
-            (this.radius + otherCircle.radius + additionalThreshold) ** 2
-          );
-        }
-
-        move() {
-          this.x += this.speedX;
-          this.y += this.speedY;
-        }
-
-        draw() {
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-          ctx.fillStyle = this.colour;
-          ctx.fill();
-          ctx.closePath();
-        }
-      }
-
-      // Creating circle entities
-      // const entities = [
-      //   new Circle(400 + 40 * Math.sin(Math.PI / 3), 280, -1, 1, "red"),
-      //   new Circle(400 - 40 * Math.sin(Math.PI / 3), 280, 1, 1, "blue"),
-      //   new Circle(400, 260, 0, 1, "red"),
-      //   new Circle(400, 300 + 40, 0, -1, "green"),
-      // ];
-      const entities = [];
-      for (let i = 0; i < NUM_ENTITIES; i++) {
-        const circle = new Circle(
-          Circle.generateRandomX(),
-          Circle.generateRandomY(),
-          Math.random() * 360,
-          COLOURS[i % COLOURS.length]
-        );
-
-        for (let j = 0; j < entities.length; j++) {
-          if (!circle.isCollideWith(entities[j])) {
-            continue;
-          }
-          circle.x = Circle.generateRandomX();
-          circle.y = Circle.generateRandomY();
-          j = 0;
-        }
-        entities.push(circle);
-      }
-
-      // Setting speed control event listeners
-      let currMultiplier = 1;
-      const MIN_MULTIPLIER = 1;
-      const MAX_MULTIPLIER = 5;
-      const speedUpBtn = document.getElementById("speed-up");
-      const slowDownBtn = document.getElementById("slow-down");
-      const multiplierEle = document.getElementById("multiplier");
-
-      const updateSpeed = (prevMulti, currMulti) => {
-        for (ent of entities) {
-          ent.speedX *= currMulti / prevMulti;
-          ent.speedY *= currMulti / prevMulti;
-        }
-        multiplierEle.innerHTML = currMulti;
-      };
-
-      speedUpBtn.addEventListener("click", () => {
-        const prevMultiplier = currMultiplier;
-        currMultiplier += 1;
-        updateSpeed(prevMultiplier, currMultiplier);
-        if (currMultiplier >= MAX_MULTIPLIER) {
-          speedUpBtn.disabled = true;
-        }
-        slowDownBtn.disabled = false;
-      });
-
-      slowDownBtn.addEventListener("click", () => {
-        const prevMultiplier = currMultiplier;
-        currMultiplier -= 1;
-        updateSpeed(prevMultiplier, currMultiplier);
-        if (currMultiplier <= MIN_MULTIPLIER) {
-          slowDownBtn.disabled = true;
-        }
-        speedUpBtn.disabled = false;
-      });
-
-      // Setting time elapsed interval
-      let timeElapsed = 0;
-      const minElapsedEle = document.getElementById("elapsed-min");
-      const secElapsedEle = document.getElementById("elapsed-sec");
-
-      const timeElapsedIntervalId = window.setInterval(() => {
-        timeElapsed += currMultiplier;
-        const secElapsedStr = (timeElapsed % 60).toString();
-        const minElapsedStr = Math.floor(timeElapsed / 60).toString();
-        minElapsedEle.innerHTML =
-          (minElapsedStr.length === 1 ? "0" : "") + minElapsedStr;
-        secElapsedEle.innerHTML =
-          (secElapsedStr.length === 1 ? "0" : "") + secElapsedStr;
-      }, 1000);
-
-      // Initialising collision counter
-      let collisionCntTotal = 0;
-      const collisionCntEle = document.getElementById("collision-cnt");
-
-      const mainLoop = () => {
-        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        for (const ent of entities) {
-          ent.move();
-        }
-        // Checking collision with walls
-        for (const ent of entities) {
-          if (ent.x + ent.radius >= CANVAS_WIDTH || ent.x - ent.radius <= 0) {
-            ent.speedX =
-              (ent.x + ent.radius >= CANVAS_WIDTH ? -1 : 1) *
-              Math.abs(ent.speedX);
-            ent.prevCollidedEntity = null;
-          }
-          if (ent.y + ent.radius >= CANVAS_HEIGHT || ent.y - ent.radius <= 0) {
-            ent.speedY =
-              (ent.y + ent.radius >= CANVAS_HEIGHT ? -1 : 1) *
-              Math.abs(ent.speedY);
-            ent.prevCollidedEntity = null;
-          }
-        }
-
-        // Checking collision with other circles
-        let collisionCntCurr = 0;
-        for (let i = 0; i < entities.length; i++) {
-          for (let j = i + 1; j < entities.length; j++) {
-            const ent1 = entities[i];
-            const ent2 = entities[j];
-            if (
-              !ent1.isCollideWith(ent2) ||
-              (ent1.prevCollidedEntity === ent2 &&
-                ent2.prevCollidedEntity === ent1)
-            ) {
-              continue;
-            }
-            ent1.prevCollidedEntity = ent2;
-            ent2.prevCollidedEntity = ent1;
-            collisionCntCurr++;
-            collisionCntTotal++;
-            const theta =
-              Math.PI / 2 -
-              (ent1.x == ent2.x
-                ? 0
-                : ent1.y == ent2.y
-                ? Math.PI / 2
-                : Math.atan((ent1.y - ent2.y) / (ent1.x - ent2.x)));
-            const sinTheta = Math.sin(theta);
-            const cosTheta = Math.cos(theta);
-            [ent1.speedX, ent1.speedY, ent2.speedX, ent2.speedY] = [
-              ent1.speedX * cosTheta ** 2 -
-                ent1.speedY * (sinTheta * cosTheta) +
-                ent2.speedX * sinTheta ** 2 +
-                ent2.speedY * (cosTheta * sinTheta),
-              -ent1.speedX * sinTheta * cosTheta +
-                ent1.speedY * sinTheta ** 2 +
-                ent2.speedX * (sinTheta * cosTheta) +
-                ent2.speedY * cosTheta ** 2,
-              ent2.speedX * cosTheta ** 2 -
-                ent2.speedY * (sinTheta * cosTheta) +
-                ent1.speedX * sinTheta ** 2 +
-                ent1.speedY * (cosTheta * sinTheta),
-              -ent2.speedX * sinTheta * cosTheta +
-                ent2.speedY * sinTheta ** 2 +
-                ent1.speedX * (sinTheta * cosTheta) +
-                ent1.speedY * cosTheta ** 2,
-            ];
-            // Separating the 2 elements so they are not colliding anymore
-            const dist = Math.sqrt(
-              (ent1.x - ent2.x) ** 2 + (ent1.y - ent2.y) ** 2
-            );
-            ent2.x +=
-              (ent2.x >= ent1.x ? 1 : -1) *
-              (2 * Circle.defaultRadius - dist) *
-              Math.abs(sinTheta);
-            ent2.y +=
-              (ent2.y >= ent1.y ? 1 : -1) *
-              (2 * Circle.defaultRadius - dist) *
-              Math.abs(cosTheta);
-          }
-        }
-        for (const ent of entities) {
-          ent.draw();
-        }
-        collisionCntEle.innerHTML = collisionCntTotal;
-        // Terminating if all spheres collide
-        if (collisionCntCurr >= NUM_ENTITIES - 1) {
-          window.clearInterval(timeElapsedIntervalId);
-          return;
-        }
-
-        window.requestAnimationFrame(mainLoop);
-      };
-
-      window.requestAnimationFrame(mainLoop);
-    </script>
+    <script src="index.js"></script>
   </body>
 </html>
