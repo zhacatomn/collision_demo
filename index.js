@@ -15,10 +15,10 @@ let collisionCntTotal = 0;
 class Circle {
   static defaultSpeed = 5;
   static defaultRadius = 20;
-  constructor(x, y, angle, colour = "red") {
+  constructor(x, y, angle, colour = "red", speedMultiplier = 1) {
     this.radius = Circle.defaultRadius;
-    this.speedX = Circle.defaultSpeed * Math.cos(angle);
-    this.speedY = Circle.defaultSpeed * Math.sin(angle);
+    this.speedX = speedMultiplier * Circle.defaultSpeed * Math.cos(angle);
+    this.speedY = speedMultiplier * Circle.defaultSpeed * Math.sin(angle);
     this.x = x;
     this.y = y;
     this.colour = colour;
@@ -62,12 +62,13 @@ class Circle {
   }
 }
 
-const createNewEntity = () => {
+const createNewEntity = (speedMultiplier = 1) => {
   const circle = new Circle(
     Circle.generateRandomX(),
     Circle.generateRandomY(),
     Math.random() * 360,
-    COLOURS[entities.length % 3]
+    COLOURS[entities.length % 3],
+    speedMultiplier
   );
 
   for (let j = 0; j < entities.length; j++) {
@@ -231,7 +232,7 @@ const init = () => {
     }
     if (numEntitiesNew > numEntities) {
       for (let i = 0; i < diff; i++) {
-        createNewEntity();
+        createNewEntity(currMultiplier);
       }
     }
     numEntities = numEntitiesNew;
