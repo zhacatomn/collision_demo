@@ -184,6 +184,7 @@ const mainLoop = (callbackOnEnd) => () => {
     if (hasTriCollision) {
         callbackOnEnd();
         document.getElementById("end-message").style.display = "block";
+        document.getElementById("ding-audio").play();
         return;
     }
     window.requestAnimationFrame(mainLoop(callbackOnEnd));
