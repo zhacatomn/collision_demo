@@ -85,13 +85,15 @@ const createNewEntity = (speedMultiplier = 1) => {
 const handleWallCollision = () => {
   for (const ent of entities) {
     if (ent.x + ent.radius >= CANVAS_WIDTH || ent.x - ent.radius <= 0) {
-      ent.speedX =
-        (ent.x + ent.radius >= CANVAS_WIDTH ? -1 : 1) * Math.abs(ent.speedX);
+      const factor = ent.x + ent.radius >= CANVAS_WIDTH ? -1 : 1;
+      ent.speedX = factor * Math.abs(ent.speedX);
+      ent.x = factor < 0 ? CANVAS_WIDTH - ent.radius : ent.radius;
       ent.prevCollidedEntity = null;
     }
     if (ent.y + ent.radius >= CANVAS_HEIGHT || ent.y - ent.radius <= 0) {
-      ent.speedY =
-        (ent.y + ent.radius >= CANVAS_HEIGHT ? -1 : 1) * Math.abs(ent.speedY);
+      const factor = ent.y + ent.radius >= CANVAS_HEIGHT ? -1 : 1;
+      ent.speedY = factor * Math.abs(ent.speedY);
+      ent.y = factor < 0 ? CANVAS_HEIGHT - ent.radius : ent.radius;
       ent.prevCollidedEntity = null;
     }
   }
@@ -146,12 +148,14 @@ const handleCircleCollision = () => {
       ];
       // Separating the 2 elements so they are not colliding anymore
       const dist = Math.sqrt((ent1.x - ent2.x) ** 2 + (ent1.y - ent2.y) ** 2);
-      ent2.x +=
-        (ent2.x >= ent1.x ? 1 : -1) *
+      const entToShift = hasCollidedEntityIdx[i] ? ent2 : ent1;
+      const entToFix = entToShift === ent2 ? ent1 : ent2;
+      entToShift.x +=
+        (entToShift.x >= entToFix.x ? 1 : -1) *
         (2 * Circle.defaultRadius - dist) *
         Math.abs(sinTheta);
-      ent2.y +=
-        (ent2.y >= ent1.y ? 1 : -1) *
+      entToShift.y +=
+        (entToShift.y >= entToFix.y ? 1 : -1) *
         (2 * Circle.defaultRadius - dist) *
         Math.abs(cosTheta);
     }
