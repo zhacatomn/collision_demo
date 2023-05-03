@@ -1,101 +1,104 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Random Motion Demo</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <style>
-    @font-face {
-      font-family: "Outfit Regular";
-      src: url("Outfit-Regular.ttf") format("truetype");
-    }
-    :root {
-      font-family: Outfit Regular;
-    }
-    body {
-      box-sizing: border-box;
-      margin: 0;
-      padding-top: 1rem;
-      padding-bottom: 1rem;
-      width: 100%;
-      min-height: 100vh;
+    <head>
+        <title>Random Motion Demo</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    </head>
+    <style>
+        @font-face {
+            font-family: "Outfit Regular";
+            src: url("Outfit-Regular.ttf") format("truetype");
+        }
+        :root {
+            font-family: Outfit Regular;
+        }
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            width: 100%;
+            min-height: 100vh;
 
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 1rem;
-    }
-    #end-message {
-      font-size: 2rem;
-      font-weight: bold;
-      display: none;
-    }
-    #canvas {
-      border: 2px solid black;
-      border-radius: 15px;
-    }
-    .control-item,
-    .control-item input,
-    .control-item button {
-      font-size: 1.5rem;
-    }
-    .control-item {
-      text-align: center;
-    }
-    .control-item button {
-      margin: 0 0.5rem 0 0.5rem;
-      font-size: 1.5rem;
-    }
-    #data,
-    #control {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 2rem;
-    }
-    .data-item {
-      text-align: center;
-    }
-    .data-item h3 {
-      margin: 0;
-    }
-  </style>
-  <body>
-    <div id="end-message">Trimolecular collision occured!</div>
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+        #end-message {
+            font-size: 2rem;
+            font-weight: bold;
+            display: none;
+        }
+        #canvas {
+            border: 2px solid black;
+            border-radius: 15px;
+        }
+        .control-item,
+        .control-item input,
+        .control-item button {
+            font-size: 1.5rem;
+        }
+        .control-item {
+            text-align: center;
+        }
+        .control-item button {
+            margin: 0 0.5rem 0 0.5rem;
+            font-size: 1.5rem;
+        }
+        #data,
+        #control {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+        }
+        .data-item {
+            text-align: center;
+        }
+        .data-item h3 {
+            margin: 0;
+        }
+    </style>
+    <body>
+        <div id="end-message">Trimolecular collision occured!</div>
 
-    <canvas id="canvas" width="800" height="600"></canvas>
+        <canvas id="canvas" width="800" height="600"></canvas>
 
-    <div id="control">
-      <div class="control-item">
-        <label for="entity-cnt"># Molecules </label><br /><input
-          type="number"
-          value="3"
-          id="entity-cnt"
-          min="3"
-          max="50"
-          inputmode="numeric"
-          pattern="[0-9]*"
-        />
-      </div>
-      <div class="control-item">
-        <span>Speedup</span> <br />
-        <button id="slow-down" disabled><<</button>
-        ×<span id="multiplier">1</span>
-        <button id="speed-up">>></button>
-      </div>
-    </div>
+        <div id="control">
+            <div class="control-item">
+                <label for="entity-cnt"># Molecules </label><br />
+                <input
+                    type="number"
+                    value="3"
+                    id="entity-cnt"
+                    min="3"
+                    max="50"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                />
+            </div>
+            <div class="control-item">
+                <span>Speedup</span> <br />
+                <button id="slow-down" disabled><<</button>
+                ×<span id="multiplier">1</span>
+                <button id="speed-up">>></button>
+            </div>
+        </div>
 
-    <div id="data">
-      <div class="data-item">
-        <h3>Time Elapsed</h3>
-        <span id="elapsed-min">00</span>:<span id="elapsed-sec">00</span>
-      </div>
-      <div class="data-item">
-        <h3># Bimolecular Collisions</h3>
-        <span id="collision-cnt">0</span>
-      </div>
-    </div>
-    <script src="index.js"></script>
-  </body>
+        <div id="data">
+            <div class="data-item">
+                <h3>Time Elapsed</h3>
+                <span id="elapsed-min">00</span>:<span id="elapsed-sec"
+                    >00</span
+                >
+            </div>
+            <div class="data-item">
+                <h3># Bimolecular Collisions</h3>
+                <span id="collision-cnt">0</span>
+            </div>
+        </div>
+        <script src="index.js"></script>
+    </body>
 </html>
