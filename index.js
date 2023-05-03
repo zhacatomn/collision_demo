@@ -254,15 +254,20 @@ const init = () => {
     const minElapsedEle = document.getElementById("elapsed-min");
     const secElapsedEle = document.getElementById("elapsed-sec");
 
-    const timeElapsedIntervalId = window.setInterval(() => {
-        timeElapsed += currMultiplier;
+    const handleTimeElapsed = () => {
+        timeElapsed++;
         const secElapsedStr = (timeElapsed % 60).toString();
         const minElapsedStr = Math.floor(timeElapsed / 60).toString();
         minElapsedEle.innerHTML =
             (minElapsedStr.length === 1 ? "0" : "") + minElapsedStr;
         secElapsedEle.innerHTML =
             (secElapsedStr.length === 1 ? "0" : "") + secElapsedStr;
-    }, 1000);
+        timeElapsedTimeoutId = setTimeout(
+            handleTimeElapsed,
+            1000 / currMultiplier
+        );
+    };
+    let timeElapsedTimeoutId = setTimeout(handleTimeElapsed, 1000);
 
     // Creating circle entities
     for (let i = 0; i < numEntities; i++) {
@@ -270,7 +275,7 @@ const init = () => {
     }
 
     const cleanUp = () => {
-        window.clearInterval(timeElapsedIntervalId);
+        window.clearTimeout(timeElapsedTimeoutId);
         speedUpBtn.disabled = slowDownBtn.disabled = true;
         entityCntEle.disabled = true;
     };
